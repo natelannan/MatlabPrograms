@@ -1,8 +1,8 @@
 function A = resize(I, p, m)
     [x,y,z]=size(I);
     u=1:1/p:x; v=1:1/p:y;
-    [XI, YI] = ndgrid(u,v);  %create a square array X1 st columns are replications of new indicies values overlayed on old pixles
-                             %"                     Y1 st rows "
+    [XI, YI] = ndgrid(u,v);  %create a square array XI st columns are replications of new indicies values overlayed on old pixles
+                             %"                     YI st rows "
     II=im2double(I);  %switch to double precision
     if(m==1)
         U=round(u); V=round(v);  %grab the nearest old pixle to the new overlay
@@ -20,6 +20,8 @@ function A = resize(I, p, m)
         X1 = floor(XI)-1; X2 = floor(XI); X3 = floor(XI)+1; X4 = floor(XI)+2;
         Y1 = floor(YI)-1; Y2 = floor(YI); Y3 = floor(YI)+1; Y4 = floor(YI)+2;
         
+
+        
         H11 = sombrero(X1-XI).*sombrero(Y1-YI); H12 = sombrero(X1-XI).*sombrero(Y2-YI);
         H13 = sombrero(X1-XI).*sombrero(Y3-YI); H14 = sombrero(X1-XI).*sombrero(Y4-YI);
 
@@ -32,14 +34,14 @@ function A = resize(I, p, m)
         H41 = sombrero(X4-XI).*sombrero(Y1-YI); H42 = sombrero(X4-XI).*sombrero(Y2-YI);
         H43 = sombrero(X4-XI).*sombrero(Y3-YI); H44 = sombrero(X4-XI).*sombrero(Y4-YI);
 
-        X1(find(X1<1))=4; Y1(find(Y1<1))=4;  %test bounds
-        X2(find(X2<1))=4; Y2(find(Y2<1))=4;
+        X1(find(X1<1))=1; Y1(find(Y1<1))=1;  %test bounds
+%         X2(find(X2<1))=4; Y2(find(Y2<1))=4;
         % X3(find(X3<1))=4; Y3(find(Y3<1))=4;
         % X4(find(X4<1))=4; Y4(find(Y4<1))=4;
         % X1(find(X1>x))=x-3; Y1(find(Y1>y))=y-3;
         % X2(find(X2>x))=x-3; Y2(find(Y2>y))=y-3;
-        X3(find(X3>x))=x-3; Y3(find(Y3>y))=y-3;
-        X4(find(X4>x))=x-3; Y4(find(Y4>y))=y-3;
+        %X3(find(X3>x))=x-3; Y3(find(Y3>y))=y-3;
+        X4(find(X4>x))=x; Y4(find(Y4>y))=y;
 
         for i=1:z
             I11 = II(X1(:,1)', Y1(1,:),i); I12 = II(X1(:,1)', Y2(1,:),i);
