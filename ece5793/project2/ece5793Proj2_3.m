@@ -36,12 +36,26 @@ aftPad=zeros(1,(L-1)-floor(edges(end)));
 nk=cat(2,forePad,n,aftPad);
 
 sk=zeros(1,L);
+equalized=zeros(N,M);
 corrected=zeros(N,M);
 for i=1:L
     sk(i)=(L-1)/(M*N)*sum(nk(1:i));
     sk(i)=round(sk(i));
-    corrected(find(I==(i-1)))=sk(i);
+    equalized(find(I==(i-1)))=sk(i);
+    %corrected(find(I==(i-1)))=Gzq(i);
 end
+for i=1:L
+    foo = find(Gzq==(i-1));
+    if(foo)
+        Ginv(i) = foo(1);
+    else
+        Ginv(i) = Ginv(i-1);
+    end
+    corrected(find(equalized==(i-1)))=Ginv(i);
+end
+
+
+equalized = cast(equalized,'uint8');
 corrected = cast(corrected,'uint8');
 
 figure(3)
