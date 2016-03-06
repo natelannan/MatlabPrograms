@@ -25,7 +25,11 @@ info=imfinfo('duck_blur.jpg');
 
 L=2^(info.BitDepth/3);
 dduck=im2double(duck);
-
+padSizeH=info.Height;
+padSizeW=info.Width;
+dduck=padarray(dduck,[padSizeH padSizeW]);
+figure(90)
+imshow(dduck)
 
 % FFTDUCK=fftshift(fft2(dduck));
 % DUCK = log(abs(FFTDUCK)+1);
@@ -79,19 +83,32 @@ imshow(duck_orig)
 % subplot(1,3,3)
 % imshow(abs(diffb),[])
 
-HPF=zeros(info.Height,info.Width);
-u=1:info.Height; v=1:info.Width;
+HPF=zeros(info.Height*3,info.Width*3);
+Butt=zeros(info.Height*3,info.Width*3);
+Gauss=zeros(info.Height*3,info.Width*3);
+D0Butt=6;
+D0Gauss=6;
+n=2;
+u=1:info.Height*3; v=1:info.Width*3;
 [XI, YI] = ndgrid(u,v);
-D=sqrt((XI-(info.Height/2 +1)).^2+(YI-(info.Width/2 +1)).^2);
+D=sqrt((XI-(info.Height*3/2 +1)).^2+(YI-(info.Width*3/2 +1)).^2);
 HPF(D<=3)=0;
 HPF(D>3)=1;
-% figure(7)
-% imshow(HPF)
+Butt=1./(1+(D0Butt./D).^(2*n));
+Gauss=1-exp(-D.^2./(2*D0Gauss.^2));
+figure(7)
+imshow(Gauss)
 A=2;
 a=0.5;
 b=2;
 HBF=(A-1)+HPF;
 HFE=a+b*HPF;
+
+HBFButt=(A-1)+Butt;
+HFEButt=a+b*Butt;
+
+HBFGauss=(A-1)+Gauss;
+HFEGauss=a+b*Gauss;
 
 BFiltered(:,:,1) = FFTDUCK_R.*HBF;
 BFiltered(:,:,2) = FFTDUCK_G.*HBF;
@@ -100,12 +117,44 @@ BFiltered(:,:,3) = FFTDUCK_B.*HBF;
 EFiltered(:,:,1) = FFTDUCK_R.*HFE;
 EFiltered(:,:,2) = FFTDUCK_G.*HFE;
 EFiltered(:,:,3) = FFTDUCK_B.*HFE;
+
+BFilteredButt(:,:,1) = FFTDUCK_R.*HBFButt;
+BFilteredButt(:,:,2) = FFTDUCK_G.*HBFButt;
+BFilteredButt(:,:,3) = FFTDUCK_B.*HBFButt;
+
+EFilteredButt(:,:,1) = FFTDUCK_R.*HFEButt;
+EFilteredButt(:,:,2) = FFTDUCK_G.*HFEButt;
+EFilteredButt(:,:,3) = FFTDUCK_B.*HFEButt;
+
+BFilteredButt(:,:,1) = FFTDUCK_R.*HBFGauss;
+BFilteredButt(:,:,2) = FFTDUCK_G.*HBFGauss;
+BFilteredButt(:,:,3) = FFTDUCK_B.*HBFGauss;
+
+EFilteredButt(:,:,1) = FFTDUCK_R.*HFEGauss;
+EFilteredButt(:,:,2) = FFTDUCK_G.*HFEGauss;
+EFilteredButt(:,:,3) = FFTDUCK_B.*HFEGauss;
 for i=1:3
     BRecovered(:,:,i)=abs(ifft2(ifftshift(BFiltered(:,:,i))));
     ERecovered(:,:,i)=abs(ifft2(ifftshift(EFiltered(:,:,i))));
+    BRecoveredButt(:,:,i)=abs(ifft2(ifftshift(BFilteredButt(:,:,i))));
+    ERecoveredButt(:,:,i)=abs(ifft2(ifftshift(EFilteredButt(:,:,i))));
+    BRecoveredGauss(:,:,i)=abs(ifft2(ifftshift(BFilteredButt(:,:,i))));
+    ERecoveredGauss(:,:,i)=abs(ifft2(ifftshift(EFilteredButt(:,:,i))));
 end
 figure(8)
 subplot(1,2,1)
 imshow(BRecovered)
 subplot(1,2,2)
 imshow(ERecovered)
+
+figure(9)
+subplot(1,2,1)
+imshow(BRecoveredButt)
+subplot(1,2,2)
+imshow(ERecoveredButt)
+
+figure(10)
+subplot(1,2,1)
+imshow(BRecoveredGauss)
+subplot(1,2,2)
+imshow(ERecoveredGauss)
