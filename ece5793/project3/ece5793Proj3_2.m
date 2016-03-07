@@ -25,11 +25,18 @@ info=imfinfo('duck_blur.jpg');
 
 L=2^(info.BitDepth/3);
 dduck=im2double(duck);
-padSizeH=info.Height;
-padSizeW=info.Width;
-dduck=padarray(dduck,[padSizeH padSizeW]);
-figure(90)
-imshow(dduck)
+
+
+% for i=1:3
+%     normDuck(:,:,i)=dduck(:,:,i)-min(min(dduck(:,:,i)));
+%     normDuck(:,:,i)=dduck(:,:,i)/max(max(dduck(:,:,i)));
+% end
+normDuck=(dduck-min(min(min(dduck))))/(max(max(max(dduck))));
+% normDuck=padarray(normDuck,[info.Height info.Width],'post');
+% dduck=padarray(dduck,[info.Height info.Width],'post');
+
+% figure(90)
+% imshow(dduck)
 
 % FFTDUCK=fftshift(fft2(dduck));
 % DUCK = log(abs(FFTDUCK)+1);
@@ -43,6 +50,13 @@ FFTDUCK_B=fftshift(fft2(dduck(:,:,3)));
 DUCK_R=log(abs(FFTDUCK_R)+1);
 DUCK_G=log(abs(FFTDUCK_G)+1);
 DUCK_B=log(abs(FFTDUCK_B)+1);
+
+NORMFFTDUCK_R=fftshift(fft2(normDuck(:,:,1)));
+NORMFFTDUCK_G=fftshift(fft2(normDuck(:,:,2)));
+NORMFFTDUCK_B=fftshift(fft2(normDuck(:,:,3)));
+% NORMDUCK_R=log(abs(NORMFFTDUCK_R)+1);
+% NORMDUCK_G=log(abs(NORMFFTDUCK_G)+1);
+% NORMDUCK_B=log(abs(NORMFFTDUCK_B)+1);
 
 
 
@@ -83,21 +97,26 @@ imshow(duck_orig)
 % subplot(1,3,3)
 % imshow(abs(diffb),[])
 
-HPF=zeros(info.Height*3,info.Width*3);
-Butt=zeros(info.Height*3,info.Width*3);
-Gauss=zeros(info.Height*3,info.Width*3);
+HPF=zeros(info.Height,info.Width);
+% Butt=zeros(info.Height,info.Width);
+% Gauss=zeros(info.Height,info.Width);
+% Laplace=zeros(info.Height,info.Width);
 D0Butt=6;
 D0Gauss=6;
 n=2;
-u=1:info.Height*3; v=1:info.Width*3;
+u=1:info.Height; v=1:info.Width;
 [XI, YI] = ndgrid(u,v);
-D=sqrt((XI-(info.Height*3/2 +1)).^2+(YI-(info.Width*3/2 +1)).^2);
+D=sqrt((XI-((info.Height)/2 +1)).^2+(YI-((info.Width)/2 +1)).^2);
 HPF(D<=3)=0;
 HPF(D>3)=1;
 Butt=1./(1+(D0Butt./D).^(2*n));
 Gauss=1-exp(-D.^2./(2*D0Gauss.^2));
-figure(7)
-imshow(Gauss)
+Laplace=-4*pi^2*D.^2;
+shiftLaplace=Laplace-min(min(Laplace));
+normLaplace=shiftLaplace/max(max(shiftLaplace));
+
+figure(18)
+imshow(normLaplace)
 A=2;
 a=0.5;
 b=2;
@@ -133,6 +152,15 @@ BFilteredButt(:,:,3) = FFTDUCK_B.*HBFGauss;
 EFilteredButt(:,:,1) = FFTDUCK_R.*HFEGauss;
 EFilteredButt(:,:,2) = FFTDUCK_G.*HFEGauss;
 EFilteredButt(:,:,3) = FFTDUCK_B.*HFEGauss;
+
+LaplacianF(:,:,1)= NORMFFTDUCK_R.*Laplace;
+LaplacianF(:,:,2)= NORMFFTDUCK_G.*Laplace;
+LaplacianF(:,:,3)= NORMFFTDUCK_B.*Laplace;
+
+LaplacianFthing(:,:,1)= NORMFFTDUCK_R.*normLaplace;
+LaplacianFthing(:,:,2)= NORMFFTDUCK_G.*normLaplace;
+LaplacianFthing(:,:,3)= NORMFFTDUCK_B.*normLaplace;
+
 for i=1:3
     BRecovered(:,:,i)=abs(ifft2(ifftshift(BFiltered(:,:,i))));
     ERecovered(:,:,i)=abs(ifft2(ifftshift(EFiltered(:,:,i))));
@@ -140,21 +168,76 @@ for i=1:3
     ERecoveredButt(:,:,i)=abs(ifft2(ifftshift(EFilteredButt(:,:,i))));
     BRecoveredGauss(:,:,i)=abs(ifft2(ifftshift(BFilteredButt(:,:,i))));
     ERecoveredGauss(:,:,i)=abs(ifft2(ifftshift(EFilteredButt(:,:,i))));
+    Laplacian(:,:,i)=ifft2(ifftshift(LaplacianF(:,:,i)));
+%     hmm(:,:,i)=ifft2(ifftshift(LaplacianFthing(:,:,i)));
+    %normLaplacian(:,:,i)=Laplacian(:,:,i)/max(max(Laplacian(:,:,i)));
 end
-figure(8)
-subplot(1,2,1)
+% Laplacian(1,:,:)=0;
+normLaplacian=Laplacian/max(max(max(Laplacian(:,:,i))));
+% BRecovered=imcrop(BRecovered,[1 1 info.Width-1 info.Height-1]);
+% ERecovered=imcrop(ERecovered,[1 1 info.Width-1 info.Height-1]);
+% BRecoveredButt=imcrop(BRecoveredButt,[1 1 info.Width-1 info.Height-1]);
+% BRecoveredGauss=imcrop(BRecoveredGauss,[1 1 info.Width-1 info.Height-1]);
+% ERecoveredButt=imcrop(ERecoveredButt,[1 1 info.Width-1 info.Height-1]);
+% ERecoveredGauss=imcrop(ERecoveredGauss,[1 1 info.Width-1 info.Height-1]);
+
+c=1;  gamma=.8;
+Bfinal=c*(BRecovered).^gamma;
+Efinal=c*(ERecovered).^gamma;
+% scaled=linspace(min(BRecovered(:)),max(BRecovered(:)),256);
+% BRecoveredINT=uint8(arrayfun(@(x) find(abs(scaled(:)-x)==min(abs(scaled(:)-x))),BRecovered));
+% Beqd=equalize(BRecoveredINT);
+
+figure(3)
 imshow(BRecovered)
-subplot(1,2,2)
+figure(4)
 imshow(ERecovered)
+figure(5)
+imshow(Bfinal)
+figure(6)
+imshow(Efinal)
+% 
+% figure(13)
+% imshow(Beqd)
 
-figure(9)
-subplot(1,2,1)
+
+c=1;  gamma=.8;
+BfinalButt=c*(BRecoveredButt).^gamma;
+EfinalButt=c*(ERecoveredButt).^gamma;
+
+
+figure(7)
 imshow(BRecoveredButt)
-subplot(1,2,2)
+figure(8)
 imshow(ERecoveredButt)
-
+figure(9)
+imshow(BfinalButt)
 figure(10)
-subplot(1,2,1)
+imshow(EfinalButt)
+
+c=1;  gamma=.8;
+BfinalGauss=c*(BRecoveredGauss).^gamma;
+EfinalGauss=c*(ERecoveredGauss).^gamma;
+
+figure(11)
 imshow(BRecoveredGauss)
-subplot(1,2,2)
+figure(12)
 imshow(ERecoveredGauss)
+figure(13)
+imshow(BfinalGauss)
+figure(14)
+imshow(EfinalGauss)
+
+% figure(15)
+% imshow(hmm)
+
+enhanced=normDuck-normLaplacian;
+% enhanced=imcrop(enhanced,[1 1 info.Width-1 info.Height-1]);
+figure(16)
+imshow(enhanced)
+
+enhancedPower=c*(enhanced).^gamma;
+
+figure(17)
+imshow(enhancedPower)
+
