@@ -32,11 +32,11 @@ imshow(dnoisy)
 figure(2)
 imshow(original);
 
-arithMean=arithMean(dnoisy,5);
+arithMean=arithMean(dnoisy,3);
 % arithMean=arithMean(noisy,9);
 psnr=myPSNR(original, arithMean);
 disp(psnr)
-geoMean=geoMean(dnoisy,5);
+geoMean=geoMean2(dnoisy,3);
 % geoMean=geoMean(noisy,9);
 psnr=myPSNR(original, geoMean);
 disp(psnr)

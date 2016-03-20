@@ -24,9 +24,9 @@ elseif(dims(1)==1 && dims(2)==1)
 end
 
 geoMean=ones(filtSize);
-% zeroI=find(I==0);  %get rid of zeros so that they won't take over.  kosher?
-% I(zeroI)=1;
-% I(zeroI)=min(min(I));
+zeroI=find(I==0);  %get rid of zeros so that they won't take over.  kosher?
+I(zeroI)=1;
+I(zeroI)=min(min(I));
 
 
 

@@ -10,7 +10,7 @@ else
 end
 original=double(original);
 
-mse=sum(sum(((original-filtered).^2)/(M*N)));
+mse=sum(sum(((original-filtered).^2)))/(M*N);
 psnr=10*log10((255^2)/mse);
 
 
