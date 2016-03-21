@@ -35,10 +35,18 @@ imshow(original);
 arithMean=arithMean(dnoisy,3);
 % arithMean=arithMean(noisy,9);
 psnr=myPSNR(original, arithMean);
+disp('Arith Mean Filter')
 disp(psnr)
 geoMean=geoMean2(dnoisy,3);
 % geoMean=geoMean(noisy,9);
 psnr=myPSNR(original, geoMean);
+disp('Geometric Mean Filter')
+disp(psnr)
+
+adaptNoise=adaptNoise(dnoisy,2);
+% geoMean=geoMean(noisy,9);
+psnr=myPSNR(original, adaptNoise);
+disp('Adaptive Noise Filter')
 disp(psnr)
 
 
@@ -46,3 +54,5 @@ figure(3)
 imshow(arithMean,[])
 figure(4)
 imshow(geoMean,[])
+figure(5)
+imshow(adaptNoise,[])
