@@ -74,7 +74,14 @@ figure(6)
 imshow(trainer)
 
 dimsTrainer=size(trainer);
-avg=sum(sum(trainer))/(dimsTrainer(1)*dimsTrainer(2));
+%avg=sum(sum(trainer))/(dimsTrainer(1)*dimsTrainer(2));
+reShapedT=reshape(trainer,dimsTrainer(1)*dimsTrainer(2),1,3);
+avg=mean(reShapedT);
+reShapedT=reshape(reShapedT,dimsTrainer(1)*dimsTrainer(2),3);
+sigma=cov(reShapedT);%dims?
+% for color=1:3
+%     sigma(:,:,color)=cov(reShapedT(:,:,color)');
+% end
 
 avgMat=repmat(avg,info.Height, info.Width);
 diff=dface-avgMat;
@@ -109,3 +116,32 @@ imshow(mask2)
 
 %==========================================================================
 
+MahaD=zeros(info.Height,info.Width);
+mask3=zeros(info.Height,info.Width);
+avg=reshape(avg,1,3);
+Isigma=inv(sigma);
+
+for i=1:info.Height
+    for j=1:info.Width
+        temp=permute(diff(i,j,:), [3 2 1]);
+        MahaD(i,j)=sqrt(temp'*Isigma*temp);
+    end
+end
+
+distThresh=2.3;
+mask3(find(MahaD<distThresh))=1;
+
+figure(10)
+imshow(mask3)
+
+distThresh=3.5;
+mask3(find(MahaD<distThresh))=1;
+
+figure(11)
+imshow(mask3)
+
+distThresh=5.5;
+mask3(find(MahaD<distThresh))=1;
+
+figure(12)
+imshow(mask3)
