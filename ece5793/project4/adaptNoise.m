@@ -1,7 +1,6 @@
 function [ filtered ] = adaptNoise( I, filtSize )
-%UNTITLED5 Summary of this function goes here
+%UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
-
 if(~isfloat(I))
     I=double(I);
     doubleOut=false;
@@ -27,32 +26,11 @@ elseif(dims(1)==1 && dims(2)==1)
     filtSize=[filtSize filtSize];
 end
 
-center = [ceil(filtSize(1)/2) ceil(filtSize(2)/2)];
-%geoMean=ones(filtSize);
-%logI=log(I);
-%padded=padarray(I,[filtSize(1)-center(1) filtSize(2)-center(2)],1);
-filtered=zeros(Idims(1),Idims(2));
-for i=1:Idims(1)
-    for j=1:Idims(2)
-        xStart=i-(center(1)-1); xStop=i+(filtSize(1)-center(1));
-        yStart=j-(center(1)-1); yStop=j+(filtSize(1)-center(1));
-        if xStart < 1 xStart = 1; end
-        if yStart < 1 yStart = 1; end
-        if xStop > Idims(1) xStop=Idims(1); end
-        if yStop > Idims(2) yStop=Idims(2); end
-        temp=I(xStart:xStop,yStart:yStop);
-        localVar=var(var(temp));
-        localMean=mean(mean(temp));
-        if noiseVar > localVar
-            varRatio=1;
-        else
-            varRatio=noiseVar/localVar;
-        end
-        filtered(i,j)= I(i,j)-varRatio*(I(i,j)-localMean);
+localMean = filter2(ones(filtSize), I) / prod(filtSize);
 
-    end
-end
+localVar = filter2(ones(filtSize), I.^2) / prod(filtSize) - localMean.^2;
 
+filtered = I - (min(1, noiseVar./localVar)) .* (I - localMean);
 
 if ~doubleOut
     filtered=uint8(filtered);
