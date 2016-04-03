@@ -13,7 +13,43 @@ close all
 clear all
 clc
 
-temp=pitchEstimator('normed_speech.mat','sh4');
+load normed_speech.mat
+speechVector=sh4_7;
+fs=8000;
+oTime=(1:length(speechVector))/fs;
+%speechVector=padarray(speechVector,53,'post');
+%pitch=pitchEstimator2('normed_speech.mat','sh4_2');
+[pitch2,newFs2]=pitchEstimator3(sh4_7);
+[pitch,newFs]=pitchEstimator2(sh4_7);
+nTime=(1:length(pitch))/newFs;
+nTime2=(1:length(pitch2))/newFs2;
+
+% upsampled=upsample(pitch,floor(length(speechVector)/length(pitch)));
+% resampled=resample(pitch,length(speechVector),length(pitch));
+figure(1)
+%plot(oTime,speechVector,nTime,pitch)
+speechVector=speechVector/max(abs(speechVector));
+[hAx,hLine1,hLine2]=plotyy(oTime,speechVector,nTime, pitch);
+legend('Normalized Data', 'Pitch')
+title('Pitch Detection for sh4\_7 Using STAC, LPF, and Classification Mask')
+xlabel('Time (seconds)')
+ylabel(hAx(1),'Normalized Amplitude') % left y-axis
+ylabel(hAx(2),'Detected Pitch (Hz)') % right y-axis
+set(hAx,{'ycolor'},{'r';'k'})
+set(hLine1,'color','r')
+set(hLine2,'color','k')
+
+figure(2)
+[hAx,hLine1,hLine2]=plotyy(oTime,speechVector,nTime2, pitch2);
+legend('Normalized Data', 'Pitch')
+title('Pitch Detection for sh4\_7 Using STAC, LPF, and Classification Mask')
+xlabel('Time (seconds)')
+ylabel(hAx(1),'Normalized Amplitude') % left y-axis
+ylabel(hAx(2),'Detected Pitch (Hz)') % right y-axis
+set(hAx,{'ycolor'},{'r';'k'})
+set(hLine1,'color','r')
+set(hLine2,'color','k')
+
 
 %sanity check for filter algorithm
 % fs=8000;

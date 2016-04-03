@@ -1,4 +1,4 @@
-function [ pitches ] = pitchEstimator( varargin )
+function [ pitches,newfs ] = pitchEstimator( varargin )
 %UNTITLED2 Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -8,6 +8,8 @@ frame_shift=120;
 LPCorder=6;
 num_frames=fix(length(speechVector)/frame_shift-(frame_len/frame_shift-1));
 fs=8000;
+lowerBound=50;      %ignore results below this pitch (Hz)
+upperBound=400;     %ignore results above this pitch (Hz)
 rp = 0.001;           % Passband ripple
 rs = 30;          % Stopband ripple
 f = [800 1200];    % Cutoff frequencies
@@ -67,9 +69,32 @@ for i=1:num_frames
     oldResidual(1:end-frame_shift)=residual(frame_shift+1:end);
     
     %=====================Step 5===========================================
-    ACresidual = xcorr(residual);
+    ACresidual = xcorr(residual,'coeff');  %coeff - normalize
+                                            %biased - scales by 1/M
+                                            %unbiased - scales by
+                                            %1/(M-abs(lags))
+    %ACresidual = ACresidual/max(ACresidual);
     %=====================Step 6===========================================
+    [val, indx] = findpeaks(ACresidual,'MinPeakHeight',0.4);
+    zeroLag = find(indx==frame_len+LPCorder);
+    if (~isempty(zeroLag) && (length(indx) > 1) && (zeroLag ~= length(indx))) %more than one peak
+        %firstPeak = indx(zeroLag+1)-frame_len;
+        sorted=sort(val,'descend');
+        fundLoc=find(val==sorted(2));
 
+        fund = abs(indx(fundLoc)-indx(zeroLag));
+        if ((fund(1) < fs/upperBound) || (fund(1) > fs/lowerBound))
+            fund=Inf(1);
+        end
+    else %only 1 peak at lag zero.  freq essentially 0.
+        %firstPeak = Inf(1);
+        fund=Inf(1);
+    end
+    %estFreq(i)=fs/firstPeak;
+    estFreq(i)=fs/fund(1);
+    %xaxis=(1:length(ACresidual))-(frame_len+LPCorder);
+
+    %plot(xaxis,ACresidual)
 % compare=filteredFrame(1:length(sanityFrame))'; %use this for LPC?
 % result=compare-sanityFrame;   
 %     
@@ -80,8 +105,9 @@ for i=1:num_frames
 end
 
 
-pitches=speechVector;
-end
+pitches=estFreq;
+newfs=ceil(fs*length(pitches)/(length(speechVector)));
+end       %step 8
 
 %%%
 %%% Subfunction parseInputs
