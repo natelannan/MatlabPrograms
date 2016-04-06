@@ -1,4 +1,4 @@
-function [ pitches,newfs ] = pitchEstimator3( varargin )
+function [ pitches,newfs ] = pitchEstimator4( varargin )
 %UNTITLED2 Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -110,15 +110,15 @@ for i=1:num_frames+(buffSize-1)
         currSpot=i-(buffSize-1);
         if(currSpot)==2 %to do: make #past values variable 
             predictor=cat(2,estFreq(1),preEstimate);
-            medianOut=medfilt1(predictor,3);  %3 point median filter
+            medianOut=adaptMed(predictor,4);  %adaptable median filter max=5
             estFreq(currSpot)=medianOut(currSpot);
         elseif(currSpot)>2
             predictor=cat(2,estFreq(i-(buffSize+1):i-buffSize),preEstimate);
-            medianOut=medfilt1(predictor,3);  %3 point median filter
+            medianOut=adaptMed(predictor,5); 
             estFreq(currSpot)=medianOut(3);
         else
             predictor=preEstimate;
-            medianOut=medfilt1(predictor,3);  %3 point median filter
+            medianOut=adaptMed(predictor,3);  
             estFreq(currSpot)=medianOut(currSpot);
         end
 %         estFreq(currSpot)=preEstimate(1);
@@ -178,6 +178,3 @@ function [speechVector] = parseInput(varargin)
         error('pitchEstimator: Unsupported input.');
     end
 end
-        
-        
-        

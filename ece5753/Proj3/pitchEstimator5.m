@@ -1,4 +1,4 @@
-function [ pitches,newfs ] = pitchEstimator3( varargin )
+function [ pitches,newfs ] = pitchEstimator5( varargin )
 %UNTITLED2 Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -88,8 +88,12 @@ for i=1:num_frames+(buffSize-1)
                                                     %unbiased - scales by
                                                     %1/(M-abs(lags))
             %ACresidual = ACresidual/max(ACresidual);
+            if(i==89 && k==1)
+                figure(10)
+                plot(ACresidual)
+            end
             %=====================Step 6===========================================
-            [val, indx] = findpeaks(ACresidual,'MinPeakHeight',0.4);
+            [val, indx] = findpeaks(ACresidual,'MinPeakHeight',0.375);
             zeroLag = find(indx==frame_len+LPCorder);
             if (~isempty(zeroLag) && (length(indx) > 1) && (zeroLag ~= length(indx))) %more than one peak
                 %firstPeak = indx(zeroLag+1)-frame_len;
@@ -107,20 +111,46 @@ for i=1:num_frames+(buffSize-1)
         %estFreq(i)=fs/firstPeak;
             preEstimate(k)=fs/fund(1);
         end
+%========================smoothing=========================================
+        mask=[0 0 1 1];
+%         mask2=[0 1 0 0];
+%         mask3=[0 0 1 0];
         currSpot=i-(buffSize-1);
         if(currSpot)==2 %to do: make #past values variable 
             predictor=cat(2,estFreq(1),preEstimate);
-            medianOut=medfilt1(predictor,3);  %3 point median filter
-            estFreq(currSpot)=medianOut(currSpot);
+            if(max(xor(predictor,~mask))) %test if trailing edge
+%                 if xor(predictor,mask2)  %test for errant edge value
+%                     estFreq(currSpot)=predictor(1);
+%                 elseif ~xor(predictor,mask2)
+%                     estFreq(currSpot)=0;
+%                 else
+                    medianOut=medfilt1(predictor,3);  %3 point median filter
+                    estFreq(currSpot)=medianOut(currSpot);
+%                 end
+            else
+                estFreq(currSpot)=preEstimate(1);
+            end
+            
         elseif(currSpot)>2
             predictor=cat(2,estFreq(i-(buffSize+1):i-buffSize),preEstimate);
-            medianOut=medfilt1(predictor,3);  %3 point median filter
-            estFreq(currSpot)=medianOut(3);
+            if(max(xor(predictor(1:4),mask))&&max(xor(predictor(2:end),~mask))) %test if edge
+%                 if(all(xor(predictor(1:4),mask2))||all(xor(predictor(2:end),mask3)))
+%                     estFreq(currSpot)=predictor(1);
+%                 elseif(all(~xor(predictor(1:4),mask2))||all(~xor(predictor(2:end),mask3)))
+%                     estFreq(currSpot)=0;
+%                 else
+                    medianOut=medfilt1(predictor,3);  %3 point median filter
+                    estFreq(currSpot)=medianOut(3);
+%                 end
+            else
+                estFreq(currSpot)=preEstimate(1);
+            end
         else
             predictor=preEstimate;
             medianOut=medfilt1(predictor,3);  %3 point median filter
             estFreq(currSpot)=medianOut(currSpot);
         end
+%==========================================================================
 %         estFreq(currSpot)=preEstimate(1);
     end     %do nothing while filling buff
     %xaxis=(1:length(ACresidual))-(frame_len+LPCorder);

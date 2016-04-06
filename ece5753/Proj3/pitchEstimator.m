@@ -47,7 +47,7 @@ for i=1:num_frames
     hammingWeight=hamming(frame_len).*rectangle;
 
     
-    Aframe=lpc(hammingWeight, LPCorder);
+    [Aframe p]=lpc(hammingWeight, LPCorder);
     %=====================Step 4===========================================
 % LPC help:
 %     est_x = filter([0 -a(2:end)],1,x);  % Estimated signal
