@@ -4,7 +4,7 @@ function [ pitches,newfs ] = pitchEstimator6( varargin )
 
 speechVector=parseInput(varargin{:});
 frame_len=240;
-frame_shift=120;
+frame_shift=60;
 LPCorder=6;
 num_frames=fix(length(speechVector)/frame_shift-(frame_len/frame_shift-1));
 fs=8000;
@@ -26,6 +26,7 @@ buffSize=3;
 buff=zeros(buffSize,frame_len);
 estFreq=zeros(1,num_frames);
 enThresh=.2;
+
 
 
 
@@ -83,26 +84,54 @@ for i=1:num_frames+(buffSize-1)
             oldResidual(k,1:end-frame_shift)=residual(frame_shift+1:end);
 
             %=====================Step 5===========================================
-            ACresidual = xcorr(residual,'coeff');  %coeff - normalize
+            MODACresidual = xcorr(residual,residual(1:115));  %coeff - normalize
                                                     %biased - scales by 1/M
                                                     %unbiased - scales by
                                                     %1/(M-abs(lags))
-            %ACresidual = ACresidual/max(ACresidual);
+                
+            MODACresidual = MODACresidual/max(MODACresidual);
+            ACresidual = xcorr(residual,'coeff');
 %             if(i==89 && k==1)
 %                 figure(10)
 %                 plot(ACresidual)
 %             end
             %=====================Step 6===========================================
-            [val, indx] = findpeaks(ACresidual,'MinPeakHeight',0.375);
+        if i==52
+            disp('foo')
+        end
+            [val, indx] = findpeaks(ACresidual,'MinPeakHeight',0.3);
             zeroLag = find(indx==frame_len+LPCorder);
+            
+            [modval, modindx] = findpeaks(MODACresidual,'MinPeakHeight',0.6);
+            modzeroLag = find(modindx==frame_len+LPCorder);
+
+%             if(val(zeroLag)<1)  %overcompesated revert to normal AC
+%                 [val, indx] = findpeaks(ACresidual,'MinPeakHeight',0.3);
+%                 zeroLag = find(indx==frame_len+LPCorder); 
+%             end
             if (~isempty(zeroLag) && (length(indx) > 1) && (zeroLag ~= length(indx))) %more than one peak
                 %firstPeak = indx(zeroLag+1)-frame_len;
+
                 sorted=sort(val,'descend');
                 fundLoc=find(val==sorted(2));
 
                 fund = abs(indx(fundLoc)-indx(zeroLag));
-                if ((fund(1) < fs/upperBound) || (fund(1) > fs/lowerBound) || (currentEn < enThresh))
+                if (currentEn < enThresh)
                     fund=Inf(1);
+                elseif ((fund(1) < fs/upperBound) || (fund(1) > fs/lowerBound))
+
+                        difference=[];
+                        for peak=1:length(modindx)-1
+                            adjPeakDiff=abs(modindx(peak)-modindx(peak+1));
+                            if(adjPeakDiff>fs/upperBound)&&(adjPeakDiff<fs/lowerBound)
+                                difference = [difference adjPeakDiff];
+                            end
+                        end
+                        if(isempty(difference))
+                            fund=Inf(1);
+                        else
+                            fund=mode(difference);
+                        end
                 end
             else %only 1 peak at lag zero.  freq essentially 0.
                 %firstPeak = Inf(1);
@@ -117,9 +146,7 @@ for i=1:num_frames+(buffSize-1)
 %         mask3=[0 0 1 0];
 
         currSpot=i-(buffSize-1);
-        if currSpot==48
-            disp('foo')
-        end
+
         if(currSpot)==2 %to do: make #past values variable 
             predictor=cat(2,estFreq(1),preEstimate);
             diffPrev=abs(predictor(2)-predictor(1));                
