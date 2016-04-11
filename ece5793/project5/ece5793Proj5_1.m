@@ -17,22 +17,23 @@ clc
 original=imread('cells.bmp');
 template=imread('disc.bmp');
 [labels numComp]=bwlabel(original);
-locator=zeros(size(original));
 se=strel('disk',1);
 bar=imerode(template,se);
 ring=template-bar;
 
 
-foo=regionprops(logical(original), 'BoundingBox');
-locator(find(labels==60))=1;
+s=regionprops(logical(original), 'BoundingBox');
 
-for i=1:numComp
-    subImage{i} = {imcrop(original, foo(i).BoundingBox)};
-end
 figure(1)
-imshow(subImage{1,1}{1,1})
-figure(2)
-imshow(original)
-figure(3)
-imshow(locator)
+imshow(original);
+% figure(2)
+% [numLoners, Lcomps,subL]=displayLoners(original,4);
+% figure(3)
+% [numEdge, Ecomps,subE]=displayEdges(original,49);
+figure(4)
+[numClusters, Ccomps,subC]=displayClusters(original,72); %fails on edges -> out of bounds, found extra on #22
+[numDisks, ringplot] =countDiscs(subC);
+disp(numDisks)
+figure(5)
+imshow(ringplot)
 
