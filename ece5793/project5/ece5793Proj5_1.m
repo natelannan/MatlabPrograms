@@ -16,13 +16,9 @@ clc
 %-------Read in images and initialize--------------------------------------
 original=imread('cells.bmp');
 template=imread('disc.bmp');
-[labels numComp]=bwlabel(original);
 se=strel('disk',1);
-bar=imerode(template,se);
-ring=template-bar;
-
-
-s=regionprops(logical(original), 'BoundingBox');
+innerC=imerode(template,se);
+ring=template-innerC;
 
 figure(1)
 imshow(original);
@@ -30,10 +26,29 @@ imshow(original);
 % [numLoners, Lcomps,subL]=displayLoners(original,4);
 % figure(3)
 % [numEdge, Ecomps,subE]=displayEdges(original,49);
-figure(4)
-[numClusters, Ccomps,subC]=displayClusters(original,72); %fails on edges -> out of bounds, found extra on #22
-[numDisks, ringplot] =countDiscs(subC);
-disp(numDisks)
+% figure(4)
+% [numClusters, Ccomps,subC]=displayClusters(original,73); %55?, 73?
+% number=0;
+% for i=1:129
+%     [numClusters, Ccomps, subC]=displayClusters(original,i);
+%     [numDisks, ringplot] =countDiscs(subC);
+%     number=number+numDisks;
+%     imshow(ringplot)
+% end
+% disp(number)
+countedImage=zeros(size(original));
+number=0;
+[subImages,origins,numComp]=allSubimage(original);
+for i=1:numComp
+    [numDisks, dots] =countDiscs(subImages{1,i}{1,1});
+    [x,y]=ind2sub(size(dots),find(dots==1));
+    originalx=x+origins(i,1);
+    originaly=y+origins(i,2);
+    countedImage(sub2ind(size(original),originalx,originaly))=1;
+    number=number+numDisks;
+end
+rings=imdilate(countedImage,ring);
+display(number)
 figure(5)
-imshow(ringplot)
+imshow(rings)
 

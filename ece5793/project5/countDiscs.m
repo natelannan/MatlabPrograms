@@ -1,4 +1,4 @@
-function [ num, rings ] = countDiscs( varargin )
+function [ num, dots ] = countDiscs( varargin )
 %UNTITLED6 Summary of this function goes here
 %   Detailed explanation goes here
 [I, component]=parseInput(varargin{:});
@@ -7,9 +7,7 @@ cross=[0 1 0;1 1 1;0 1 0];
 template=imread('disc.bmp');
 emplat=imerode(template,cross);
 eroded=imerode(I,emplat);
-se=strel('disk',1);
-innerC=imerode(emplat,se);
-ring=emplat-innerC;
+
 
 % figure(9)
 % imshow(eroded);
@@ -26,7 +24,7 @@ skipped=[];
 sorted=sort(rank,'descend');
 j=1;
 i=1;
-thresh=5;
+thresh=3;
 percdiff=100;
 while percdiff > thresh
     index=find(rank==sorted(i));
@@ -40,12 +38,16 @@ while percdiff > thresh
         end
     end
     if i>1
-        [xcoor,ycoor]=ind2sub(size(I),candidates(index));
-        [xlast,ylast]=ind2sub(size(I),candidates(prev));
-        D=sqrt((xlast-xcoor)^2+(ylast-ycoor)^2);
+        prev=find(dots==1);
+        for k=1:length(prev)
+            D(k)=LinDistance(candidates(index),prev(k),size(I));
+        end
+%         [xcoor,ycoor]=ind2sub(size(I),candidates(index));
+%         [xlast,ylast]=ind2sub(size(I),candidates(prev));
+%         D=sqrt((xlast-xcoor)^2+(ylast-ycoor)^2);
     end
     
-    if i==1 || (D>7)  %what to set D thresh to?
+    if i==1 || min(D>7)  %what to set D thresh to?  min-> return 0 if any in D are < 7
         dots(candidates(index))=1;    
         rings=imdilate(dots,template);
         diff=abs(I-rings);
@@ -56,13 +58,27 @@ while percdiff > thresh
         skipped=[skipped index];    %may need to revisit these with very busy subimages
     end
     i=i+1;
+    if i > length(sorted)
+        for i = 1:length(skipped)
+            oldPerc=percdiff;
+            dots(candidates(skipped(i)))=1;
+            rings=imdilate(dots,template);
+            diff=abs(I-rings);
+            errs=find(diff==1);
+            percdiff=(numel(errs)/numel(I))*100;
+            if abs(oldPerc-percdiff)<5
+                dots(candidates(skipped(i)))=0;
+            end
+        end
+        percdiff=thresh;
+    end
 end
-rings=imdilate(dots,ring);
+
 num = numel(find(dots == 1));
-figure(10)
-imshow(dots)
-figure(11)
-imshow(rings)
+% figure(10)
+% imshow(dots)
+% figure(11)
+% imshow(rings)
 
 end
 
