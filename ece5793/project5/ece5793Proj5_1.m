@@ -26,16 +26,33 @@ imshow(original);
 % [numLoners, Lcomps,subL]=displayLoners(original,4);
 % figure(3)
 % [numEdge, Ecomps,subE]=displayEdges(original,49);
+%
+%==================debugging===============================================
+%==================just test one specific component========================
 % figure(4)
-% [numClusters, Ccomps,subC]=displayClusters(original,73); %55?, 73?
+% [numClusters, Ccomps,subC]=displayClusters(original,55); %31, 80,40, 47, 55?, 66, 73
+% % [numLoners, Lcomps,subL]=displayLoners(original,4);
+% [numDisks, dots]=countDiscs(subC);
+% ringplot=imdilate(dots,ring);
+% figure(7)
+% imshow(ringplot)
+%=================loop through all components of a type====================
 % number=0;
-% for i=1:129
-%     [numClusters, Ccomps, subC]=displayClusters(original,i);
-%     [numDisks, ringplot] =countDiscs(subC);
+% for i=1:numLoners
+%     figure(6)
+%     [numClusters, Ccomps, subC]=displayClusters(original,Ccomps(i));
+% %     [numLoners, Lcomps, subL]=displayLoners(original,Lcomps(i));
+%     [numDisks, dots] =countDiscs(subC);
 %     number=number+numDisks;
+%     disp(numDisks)
+% %     disp(number)
+%     ringplot=imdilate(dots,ring);
+%     figure(7)
 %     imshow(ringplot)
 % end
-% disp(number)
+%==========================================================================
+%
+%==================final algorithm=========================================
 countedImage=zeros(size(original));
 number=0;
 [subImages,origins,numComp]=allSubimage(original);
@@ -49,6 +66,9 @@ for i=1:numComp
 end
 rings=imdilate(countedImage,ring);
 display(number)
-figure(5)
-imshow(rings)
+
+figure(5);
+imshow(rings);
+% imwrite(rings,'finalRings.bmp');
+
 

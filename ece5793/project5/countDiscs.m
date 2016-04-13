@@ -15,9 +15,10 @@ candidates=find(eroded==1);
 for i=1:length(candidates)
     eroded(candidates(i))=0;
     restored=imdilate(eroded,emplat);
-    diff=abs(I-restored);
-    errs=find(diff==1);
-    rank(i)=(numel(errs)/numel(I))*100;
+    errs=sum(sum(xor(I,restored)));
+%     diff=abs(I-restored);
+%     errs=find(diff==1);
+    rank(i)=(errs/numel(I))*100;
     eroded(candidates(i))=1;
 end 
 skipped=[];
@@ -47,12 +48,13 @@ while percdiff > thresh
 %         D=sqrt((xlast-xcoor)^2+(ylast-ycoor)^2);
     end
     
-    if i==1 || min(D>7)  %what to set D thresh to?  min-> return 0 if any in D are < 7
+    if i==1 || min(D>10)  %what to set D thresh to?  min-> return 0 if any in D are < 7
         dots(candidates(index))=1;    
         rings=imdilate(dots,template);
-        diff=abs(I-rings);
-        errs=find(diff==1);
-        percdiff=(numel(errs)/numel(I))*100;
+        errs=sum(sum(xor(I,rings)));
+%         diff=abs(I-rings);
+%         errs=find(diff==1);
+        percdiff=(errs/numel(I))*100;
         prev=index;
     else
         skipped=[skipped index];    %may need to revisit these with very busy subimages
@@ -63,11 +65,31 @@ while percdiff > thresh
             oldPerc=percdiff;
             dots(candidates(skipped(i)))=1;
             rings=imdilate(dots,template);
-            diff=abs(I-rings);
-            errs=find(diff==1);
-            percdiff=(numel(errs)/numel(I))*100;
-            if abs(oldPerc-percdiff)<5
-                dots(candidates(skipped(i)))=0;
+            errs=sum(sum(xor(I,rings)));
+%             diff=abs(I-rings);
+%             errs=find(diff==1);
+            percdiff=(errs/numel(I))*100;
+            change=abs(oldPerc-percdiff);
+            if numel(I)>4500  %3000
+                if change <.4
+                    dots(candidates(skipped(i)))=0;
+                end
+            elseif numel(I)>3000
+                if change <1
+                    dots(candidates(skipped(i)))=0;
+                end
+            elseif numel(I)>2000
+                if change < 2
+                    dots(candidates(skipped(i)))=0;
+                end
+            elseif numel(I)>1300
+                if change < 1.448
+                    dots(candidates(skipped(i)))=0;
+                end
+            else
+                if change <5
+                    dots(candidates(skipped(i)))=0;
+                end
             end
         end
         percdiff=thresh;

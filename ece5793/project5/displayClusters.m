@@ -25,13 +25,13 @@ if component
         subS=regionprops(logical(labelsSub),'Area');
         [maxValue,index] = max([subS.Area]);
         compImage(find(labelsSub~=index))=0;
-%         if subS(1).Area> subS(2).Area 
-%             compImage(find(labelsSub==2))=0;
-%         else
-%             compImage(find(labelsSub==1))=0;
-%         end
+        if subS(1).Area> subS(2).Area 
+            compImage(find(labelsSub==2))=0;
+        else
+            compImage(find(labelsSub==1))=0;
+        end
     end
-%     imshow(compImage)
+    imshow(compImage)
 else
     imshow(locator)
     compImage=subImage{1,compNum(1)}{1,1};
